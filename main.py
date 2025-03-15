@@ -3,34 +3,51 @@ import requests
 import os 
 import time
 from io import BytesIO
+from replicate import Client
+import base64
 
 REPLICATE_API_KEY = st.secrets["REPLICATE_API_TOKEN"]
 MODEL_NAME = st.secrets["MODEL_NAME"]
 MODEL_VERSION = st.secrets["MODEL_VERSION"]
+MAX_TRAIN_STEPS = 1000
+USER_NAME = "micksil"
+
+replicate = Client(
+    api_token=REPLICATE_API_KEY,
+    headers={
+        "User-Agent": "my-app/1.0"
+    }
+)
 
 
 def create_zip_file_link(file) -> str:
-    file_content = BytesIO(file.read())
-    url = f"https://api.replicate.com/v1/files"
-    headers = {
-        "Authorization": f"Bearer {REPLICATE_API_KEY}"
-        }
-    files = {
-        "content": ("data.zip", file_content, "application/zip")
-        }
-    response = requests.post(url, headers=headers, files=files)
-    response = response.json()
-    try: 
-        zip_url = response.get("urls").get("get")
-        return zip_url
-    except:
-        raise Exception("Upload failed: " + response.get('message', 'Unknown error'))
+    file_content = file.read()
+    base64_encoded = base64.b64encode(file_content).decode("utf-8")
+    file_input = f"data:application/octet-stream;base64,{base64_encoded}"
+    return file_input
 
 
 def extract_flux_name(filename: str) -> str:
     filename = filename.replace(".zip", "").split("_")
     filename = filename[-1]
     return filename.lower()
+
+
+def create_destination_model(flux_name:str):
+    url = "https://api.replicate.com/v1/models"
+    headers = {
+        "Authorization": f"Bearer {REPLICATE_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "owner": USER_NAME,
+        "name": f"{flux_name}_flux_lora",
+        "description": f"A model for flux_name",
+        "visibility": "public",
+        "hardware": "gpu-l40s"
+    }
+    response = requests.post(url, headers=headers, json=data)
+
 
 
 def start_replicate_training(zip_url:str, flux_name:str) -> str:
@@ -44,7 +61,7 @@ def start_replicate_training(zip_url:str, flux_name:str) -> str:
         "input_images": zip_url,
         "trigger_word": flux_name,
         "autocaption": True,
-        "steps": 1000,
+        "steps": MAX_TRAIN_STEPS,
         "lora_rank": 16,
         "optimizer": "adamw8bit",
         "batch_size": 1,
@@ -55,16 +72,33 @@ def start_replicate_training(zip_url:str, flux_name:str) -> str:
         "gradient_checkpointing": False
         }
     data = {
-        "destination": f"micksil/{flux_name}_flux_lora",
+        "destination": f"{USER_NAME}/{flux_name}_flux_lora",
         "input": input,
     }
     try:
         response = requests.post(url, headers=headers, json=data)
         response = response.json()
+        st.write(response)
         training_id = response.get("id")
         return training_id
     except Exception as e:
         raise Exception(f"Failed to start training: {e}")
+    
+
+def start_replicate_training_python(zip_url:str, flux_name:str) -> str:
+    # model_name is combinination of model_owner and model_name
+    training = replicate.trainings.create(
+        model=MODEL_NAME,
+        version=MODEL_VERSION,
+        input={
+        "input_images": zip_url,
+        "token_string": flux_name,
+        "max_train_steps": MAX_TRAIN_STEPS
+        },
+        destination=f"{USER_NAME}/{flux_name}_flux_lora"
+
+    )
+    return training.id
     
 def check_training_status(training_id) -> dict:
     while True:
@@ -77,9 +111,12 @@ def check_training_status(training_id) -> dict:
             raise Exception(f"training_id: {training_id} not found")
         response = response.json()
         status = response.get("status")
+        message_holder = st.empty()
+        message_holder.write(f"Current Status: {status}")
         if status in ["succeeded", "failed"]:
             return response
         time.sleep(30)  # Check every 30 seconds
+        message_holder.empty()
 
 
 st.set_page_config(page_title="Flux LoRA Trainer", page_icon="🚀")
@@ -99,7 +136,9 @@ if uploaded_file:
         st.success(f"File uploaded successfully!")
 
     with st.spinner("Initializing training..."):
-        training_id = start_replicate_training(zip_url, flux_name)
+        create_destination_model(flux_name=flux_name)
+        training_id = start_replicate_training_python(zip_url, flux_name)
+        print(training_id)
 
     if training_id:
         st.success(f"Training started! Training ID: `{training_id}`")

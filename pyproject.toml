@@ -5,6 +5,7 @@ description = "UI to start model trainings in Replicate"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "replicate>=1.0.4",
     "requests>=2.32.3",
     "streamlit>=1.43.2",
 ]

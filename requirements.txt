@@ -1,2 +1,3 @@
 requests>=2.32.3
 streamlit>=1.43.2
+replicate>=1.0.4
