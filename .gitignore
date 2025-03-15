@@ -12,4 +12,7 @@ wheels/
 uv.lock
 .python-version
 pyproject.zip
+.streamlit/secrets.toml
+**/__pycache__/
+
 
