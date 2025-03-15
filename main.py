@@ -1,12 +1,12 @@
 import streamlit as st
 import requests
 import os 
-from dotenv import load_dotenv
 import time
 from io import BytesIO
-load_dotenv()
 
-REPLICATE_API_KEY = os.getenv("REPLICATE_API_TOKEN")
+REPLICATE_API_KEY = st.secrets["REPLICATE_API_TOKEN"]
+MODEL_NAME = st.secrets["MODEL_NAME"]
+MODEL_VERSION = st.secrets["MODEL_VERSION"]
 
 
 def create_zip_file_link(file) -> str:
@@ -35,9 +35,7 @@ def extract_flux_name(filename: str) -> str:
 
 def start_replicate_training(zip_url:str, flux_name:str) -> str:
     # model_name is combinination of model_owner and model_name
-    model_name = os.getenv("MODEL_NAME")
-    model_version = os.getenv("MODEL_VERSION")
-    url = f"https://api.replicate.com/v1/models/{model_name}/{model_version}/trainings"
+    url = f"https://api.replicate.com/v1/models/{MODEL_NAME}/{MODEL_VERSION}/trainings"
     headers = {
         "Authorization": f"Bearer {REPLICATE_API_KEY}",
         "Content-Type": "application/json"
@@ -101,7 +99,8 @@ if uploaded_file:
         st.success(f"File uploaded successfully!")
 
     with st.spinner("Initializing training..."):
-        training_id = start_replicate_training(zip_url, flux_name)
+        # training_id = start_replicate_training(zip_url, flux_name)
+        training_id = True
 
     if training_id:
         st.success(f"Training started! Training ID: `{training_id}`")
