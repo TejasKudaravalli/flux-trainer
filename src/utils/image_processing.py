@@ -32,4 +32,5 @@ def resize_zip_file(uploaded_zip_file):
         output_buffer.seek(0)
         return output_buffer
     else:
+        uploaded_zip_file.seek(0)
         return uploaded_zip_file
