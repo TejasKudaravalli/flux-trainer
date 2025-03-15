@@ -99,8 +99,7 @@ if uploaded_file:
         st.success(f"File uploaded successfully!")
 
     with st.spinner("Initializing training..."):
-        # training_id = start_replicate_training(zip_url, flux_name)
-        training_id = True
+        training_id = start_replicate_training(zip_url, flux_name)
 
     if training_id:
         st.success(f"Training started! Training ID: `{training_id}`")
