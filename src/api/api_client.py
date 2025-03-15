@@ -41,7 +41,7 @@ def create_destination_model(flux_name: str):
 
 def start_replicate_training(zip_url: str, flux_name: str) -> str:
     # model_name is combinination of model_owner and model_name
-    MAX_TRAIN_STEPS = 1000
+    MAX_TRAIN_STEPS = 10
     model_name = st.secrets["MODEL_NAME"]
     model_version = st.secrets["MODEL_VERSION"]
     url = f"https://api.replicate.com/v1/models/{model_name}/versions/{model_version}/trainings"
