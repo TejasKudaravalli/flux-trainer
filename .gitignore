@@ -8,7 +8,6 @@ wheels/
 
 # Virtual environments
 .venv
-.streamlit/
 .env
 uv.lock
 .python-version
