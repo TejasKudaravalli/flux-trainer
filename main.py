@@ -42,7 +42,7 @@ if uploaded_file:
             training_status = check_training_status(training_id)
 
         if training_status.get("status") == "succeeded":
-            st.success(f"🎉 Training complete! {training_status.destination}")
+            st.success(f"🎉 Training complete! {training_status.get("urls",{}).get("get")}")
         else:
             st.error(f"Training failed. - {training_status.get('error')}")
             st.error(f"{training_status.get('logs')}")
