@@ -8,6 +8,7 @@ from src import (
     resize_zip_file,
     start_replicate_training,
     check_training_status,
+    get_model_url,
 )
 
 
@@ -29,7 +30,7 @@ if uploaded_file:
     result_zip_buffer = resize_zip_file(uploaded_file)
     with st.spinner("Uploading file to Replicate Files API..."):
         zip_url = create_zip_file_link(result_zip_buffer)
-        st.write(zip_url)
+        st.success("Training Data added to Replicate for training")
 
     with st.spinner("Initializing training..."):
         create_destination_model(flux_name=flux_name)
@@ -42,7 +43,8 @@ if uploaded_file:
             training_status = check_training_status(training_id)
 
         if training_status.get("status") == "succeeded":
-            st.success(f"🎉 Training complete! {training_status.get("urls",{}).get("get")}")
+            model_url = get_model_url(flux_name)
+            st.success(f"🎉 Training complete! Model URL: {model_url}")
         else:
             st.error(f"Training failed. - {training_status.get('error')}")
             st.error(f"{training_status.get('logs')}")

@@ -67,7 +67,7 @@ def start_replicate_training(zip_url: str, flux_name: str) -> str:
         raise Exception(f"Failed to start training: {response.text}")
 
 
-def check_training_status(training_id) -> dict:
+def check_training_status(training_id:str) -> dict:
     while True:
         url = f"https://api.replicate.com/v1/trainings/{training_id}"
         headers = {"Authorization": f"Bearer {st.secrets['REPLICATE_API_TOKEN']}"}
@@ -82,3 +82,18 @@ def check_training_status(training_id) -> dict:
             return response
         time.sleep(30)  # Check every 30 seconds
         message_holder.empty()
+
+def get_model_url(flux_name: str) -> str:
+    model_owner = st.secrets["USER_NAME"]
+    model_name = f"{flux_name}_flux_lora"
+    url = f"https://api.replicate.com/v1/models/{model_owner}/{model_name}"
+    logger.info(url)
+    headers = {"Authorization": f"Bearer {st.secrets['REPLICATE_API_TOKEN']}"}
+    response = requests.get(url, headers=headers)
+    logger.info(response.status_code)
+    if response.status_code in [200, 201]:
+        response = response.json()
+        model_url = response.get("url")
+        return model_url
+    else:
+        raise Exception(f"Failed to fetch the link: {response.text}")
