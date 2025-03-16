@@ -8,7 +8,7 @@ from src import (
     resize_zip_file,
     start_replicate_training,
     check_training_status,
-    get_model_url,
+    get_model_url
 )
 
 
